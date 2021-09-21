@@ -1,0 +1,138 @@
+openapi: 3.0.3
+info:
+  title: Source Formats Rest Api
+  description: |
+  Source Formats Rest Api.
+  This endpoint is used by the User Interface of Encyclopedia Galactica.
+  This endpoint is part of the bigger system which follows Command-Query Responsibility Segregation, meaning
+  every operation returns only a status code and an url. The url is the endpoint which should be polled for the
+  operation result.
+  version: 1.0.0
+servers:
+  - url: 'https://example.com'
+paths:
+  /v1/source_format:
+    post:
+      operationId: create_source_format
+      description: Initiates creation of a new Source Format object based on the provided payload
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SourceFormatPrototype'
+      responses:
+        '204':
+          description: The request of creating a new Source Format object was accepted successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/responses/OperationResponse'
+
+  /v1/source_formats/{offset}/{limit}:
+
+    parameters:
+      - name: offset
+        in: path
+        description: Offset value of the pager functionality
+        allowEmptyValue: true
+      - name: limit
+        in: path
+        description: Limit value of the pager functionality
+        allowEmptyValue: true
+
+    get:
+      operationId: list_source_formats
+      description: Initiates listing of Source Formats
+      responses:
+        '204':
+          description: The request of listing Source Formats was accepted successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+
+  /v1/source_format/result/{operation_id}:
+
+    parameters:
+      - name: operation_id
+        in: path
+        description: The unique id of the operation which result is that we would like to get
+
+    get:
+      operationId: get_operation_result
+      description: Getting the result of the operation
+      responses:
+        200:
+          description: The request of getting the result of a certain operation was accepted
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/OperationResultResponse'
+
+components:
+  schemas:
+    OperationResultResponse:
+      properties:
+        status:
+          type: string
+          description: The status of the operation which result we would like to get
+          enum:
+            - InProgress
+            - Failed
+            - Finished
+            - AlreadyProvided
+            - NotExist
+        error_details:
+          type: string
+          description: The details of the error if the operation resulted in an error
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceFormatModel'
+
+    SourceFormatModel:
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of Source Format
+        name:
+          type: string
+          description: Name of the Source Format
+        description:
+          type: string
+          description: Additional information about Source Format
+
+    SourceFormatPrototype:
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the new Source Format
+          minLength: 3
+          maxLength: 255
+        description:
+          type: string
+          description: Additional information about the new Source Format
+          minLength: 3
+          maxLength: 2500
+    OperationResponse:
+      properties:
+        url:
+          type: string
+          description: The url which should be called to get the result of the operation
+        operation_id:
+          type: string
+          description: The unique id of the operation provided by the system
+        correlation_id:
+          type: string
+          description: the unique correlation id which identifies which operation belongs to which process
+        status:
+          type: string
+          description: The status of the operation. It displays only whether the endpoint accepted the request or not.
+          enum:
+            - accepted
+            - denied
+        message:
+          type: string
+          description: If any error occurs the details of it can be found here
