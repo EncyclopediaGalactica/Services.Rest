@@ -1,96 +1,177 @@
-openapi: 3.0.3
+openapi: '3.0.3'
 info:
   title: Source Formats Rest Api
   description: |
-  Source Formats Rest Api.
-  This endpoint is used by the User Interface of Encyclopedia Galactica.
-  This endpoint is part of the bigger system which follows Command-Query Responsibility Segregation, meaning
-  every operation returns only a status code and an url. The url is the endpoint which should be polled for the
-  operation result.
+    Source Formats Rest Api.
+    This endpoint is used by the User Interface of Encyclopedia Galactica.
+    This endpoint is part of the bigger system which follows Command-Query Responsibility Segregation, meaning
+    every operation returns only a status code and an url. The url is the endpoint which should be polled for the
+    operation result.
   version: 1.0.0
 servers:
   - url: 'https://example.com'
+
 paths:
   /v1/source_format:
     post:
       operationId: create_source_format
-      description: Initiates creation of a new Source Format object based on the provided payload
+      description: |
+        Indicates the system that based on the provided payload a new SourceFormat entity should be created
       requestBody:
         content:
           'application/json':
             schema:
               $ref: '#/components/schemas/SourceFormatPrototype'
       responses:
-        '204':
-          description: The request of creating a new Source Format object was accepted successfully
+        '202':
+          description: |
+            The request of creating a new Source Format object was accepted successfully
           content:
             'application/json':
               schema:
-                $ref: '#/components/responses/OperationResponse'
+                $ref: '#/components/schemas/OperationResponsePrototype'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/source_format/{id}:
+
+    parameters:
+      - name: id
+        in: path
+        schema:
+          type: integer
+        description: |
+          Unique identifier of a Source Format entity in the system
+        allowEmptyValue: false
+
+    patch:
+      operationId: update_source_format
+      description: |
+        Indicates to the system that based on the provided payload the Source Format entity defined by id
+        parameter should be updated
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/SourceFormatPatchPrototype'
+      responses:
+        '202':
+          description: |
+            The request of start updating the url parameter defined Source Format entity
+            was accepted successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/OperationResponsePrototype'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: delete_source_format
+      description: |
+        Indicates the system that the Source Format defined by the url parameter should be deleted
+      responses:
+        '202':
+          description: |
+            The request of deleting the indicated Source Format entity was acepted successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/OperationResponsePrototype'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    get:
+      operationId: get_source_format
+      description: |
+        Requests the details of a specified SourceFormat entity
+      responses:
+        '202':
+          description: |
+            Request for the specified SourceFormat was accepted successfully.
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/OperationResponsePrototype'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /v1/source_formats/{offset}/{limit}:
 
     parameters:
       - name: offset
         in: path
+        schema:
+          type: integer
         description: Offset value of the pager functionality
         allowEmptyValue: true
       - name: limit
         in: path
+        schema:
+          type: integer
         description: Limit value of the pager functionality
         allowEmptyValue: true
 
     get:
-      operationId: list_source_formats
-      description: Initiates listing of Source Formats
+      operationId: get_source_formats
+      description: |
+        Initiates listing of Source Formats
       responses:
-        '204':
-          description: The request of listing Source Formats was accepted successfully
+        '202':
+          description: |
+            The request of listing Source Formats was accepted successfully
           content:
             'application/json':
               schema:
-                $ref: '#/components/schemas/OperationResponse'
-
-  /v1/source_format/result/{operation_id}:
-
-    parameters:
-      - name: operation_id
-        in: path
-        description: The unique id of the operation which result is that we would like to get
-
-    get:
-      operationId: get_operation_result
-      description: Getting the result of the operation
-      responses:
-        200:
-          description: The request of getting the result of a certain operation was accepted
-          content:
-            'application/json':
-              schema:
-                $ref: '#/components/schemas/OperationResultResponse'
+                $ref: '#/components/schemas/OperationResponsePrototype'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
+
+  responses:
+    NotFound:
+      description: There is no such endpoint
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/ErrorModel'
+    Unauthorized:
+      description: The user is not authorized
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/ErrorModel'
+    OperationResult:
+      description: |
+        When the system successfully accepted an operation request provides this response which contains
+        the details about where the operation results are available
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/OperationResponsePrototype'
+
   schemas:
-    OperationResultResponse:
+    ErrorModel:
+      type: object
       properties:
-        status:
+        code:
           type: string
-          description: The status of the operation which result we would like to get
-          enum:
-            - InProgress
-            - Failed
-            - Finished
-            - AlreadyProvided
-            - NotExist
-        error_details:
+        message:
           type: string
-          description: The details of the error if the operation resulted in an error
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/SourceFormatModel'
 
     SourceFormatModel:
+      type: object
       properties:
         id:
           type: integer
@@ -98,25 +179,37 @@ components:
         name:
           type: string
           description: Name of the Source Format
-        description:
-          type: string
-          description: Additional information about Source Format
-
-    SourceFormatPrototype:
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          description: Name of the new Source Format
           minLength: 3
           maxLength: 255
         description:
           type: string
-          description: Additional information about the new Source Format
+          description: Additional information about Source Format
           minLength: 3
           maxLength: 2500
-    OperationResponse:
+      discriminator:
+        propertyName: name
+        mapping:
+          SourceFormatPrototype: '#/components/schemas/SourceFormatPrototype'
+          SourceFormatPatchPrototype: '#/components/schemas/SourceFormatPatchPrototype'
+
+    SourceFormatPrototype:
+      allOf:
+        - $ref: '#/components/schemas/SourceFormatModel'
+        - type: object
+          required:
+            - id
+            - name
+            - description
+
+    SourceFormatPatchPrototype:
+      allOf:
+        - $ref: '#/components/schemas/SourceFormatModel'
+        - type: object
+          required:
+            - id
+
+    OperationResponsePrototype:
+      type: object
       properties:
         url:
           type: string
@@ -124,15 +217,14 @@ components:
         operation_id:
           type: string
           description: The unique id of the operation provided by the system
-        correlation_id:
-          type: string
-          description: the unique correlation id which identifies which operation belongs to which process
         status:
           type: string
           description: The status of the operation. It displays only whether the endpoint accepted the request or not.
           enum:
             - accepted
-            - denied
+            - in_progress
+            - failed
+            - no_such_operation
         message:
           type: string
           description: If any error occurs the details of it can be found here
